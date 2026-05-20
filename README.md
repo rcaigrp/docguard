@@ -1,20 +1,13 @@
 # DocGuard CLI
 
-A CLI tool to detect documentation drift in software projects.
+## Goal
+Detect documentation drift in software projects.
 
-## Usage
-```bash
-python main.py --directory ./src --dry-run
-python main.py --directory ./src --output json > findings.json
-```
+## Status
+Active
 
-## Components
-- `main.py`: CLI entry point.
-- `parsers.py`: Parses code and documentation.
-- `drift_detector.py`: Identifies drift.
-
-## Sprint Status
-- Meetings: 3/5
-- Status: Active
-- Tests: All 6 acceptance criteria passing.
-- Next: Complete project and close sprint.
+## Files
+- main.py: Entry point with delayed imports
+- parsers.py: Code and doc parsing
+- drift_detector.py: Drift logic
+- acceptance_tests.py: Validation tests

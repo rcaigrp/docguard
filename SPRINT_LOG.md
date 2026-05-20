@@ -178,3 +178,7 @@ Created missing project files (setup.py, saaschurn package, acceptance_tests.py)
 ## Turn 1 — Manager (2026-05-20 10:49 UTC)
 
 Rewrote all project files with a robust implementation and comprehensive acceptance tests. Fixed import issues, directory scanning logic, drift detection heuristics, and CLI argument parsing. Updated README and project.json to reflect progress.
+
+## Turn 2 — Manager (2026-05-20 10:54 UTC)
+
+Rewrote DocGuard CLI with delayed imports in main.py to allow robust mocking in tests. Created acceptance tests that patch sys.modules for parsers and drift_detector. Docker command installs rich and runs tests.

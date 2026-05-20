@@ -2,47 +2,44 @@ import argparse
 import sys
 import os
 import json
-from pathlib import Path
-from rich.console import Console
-from rich.table import Table
 
 def main():
-    parser = argparse.ArgumentParser(description='DocGuard CLI')
-    parser.add_argument('--directory', required=True, help='Directory to scan')
-    parser.add_argument('--dry-run', action='store_true', help='Dry run mode')
-    parser.add_argument('--output', help='Output JSON file')
+    import parsers
+    import drift_detector
+    from rich.console import Console
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--directory", required=True)
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--output", default="findings.json")
     args = parser.parse_args()
-    
-    from parsers import parse_python_code, parse_markdown_docs
-    from drift_detector import detect_drift
-    
+
     console = Console()
-    console.print(f"Scanning {args.directory}...")
-    
+    console.print("Scanning...")
+
     code_files = []
+    doc_files = []
     for root, dirs, files in os.walk(args.directory):
         for f in files:
-            if f.endswith('.py'):
-                code_files.append(os.path.join(root, f))
-                
-    code_elements = []
-    for f in code_files:
-        code_elements.extend(parse_python_code(f))
-        
-    docs = parse_markdown_docs(args.directory)
-    
-    findings = detect_drift(code_elements, docs, args.dry_run)
-    
-    if args.output:
-        with open(args.output, 'w') as f:
-            json.dump(findings, f)
-            
-    table = Table(title="DocGuard Findings")
-    table.add_column("Type", style="cyan")
-    table.add_column("Name")
-    for f in findings:
-        table.add_row(f['type'], f['name'])
-    console.print(table)
+            if f.endswith('.py'): code_files.append(os.path.join(root, f))
+            if f.endswith('.md'): doc_files.append(os.path.join(root, f))
+
+    code_elems = []
+    for f in code_files: code_elems.extend(parsers.parse_code(f))
+    doc_elems = []
+    for f in doc_files: doc_elems.extend(parsers.parse_docs(f))
+
+    findings = drift_detector.detect_drift(code_elems, doc_elems)
+
+    console.print(f"Findings: {len(findings)}")
+    for f in findings: console.print(f"  - {f}")
+
+    if args.dry_run:
+        console.print("Dry run")
+    else:
+        with open(args.output, 'w') as out:
+            json.dump(findings, out)
+        console.print(f"Exported to {args.output}")
 
 if __name__ == '__main__':
     main()
