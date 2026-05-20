@@ -1,27 +1,44 @@
-from parsers import get_code_elements, get_doc_refs
+import re
+from typing import List, Dict
 
-def scan(directory):
-    code_elements = get_code_elements(directory)
-    doc_refs = get_doc_refs(directory)
-    
+def detect_drift(code_elements: List[Dict], doc_sections: List[Dict]) -> List[Dict]:
+    """
+    Identifies potential documentation drift by comparing code elements with documentation sections.
+    Uses simple heuristics to identify undocumented functions and outdated references.
+    """
     findings = []
-    code_names = [e['name'] for e in code_elements]
-    
+    code_names = {elem['name'] for elem in code_elements}
+
+    # Check for undocumented code elements
     for elem in code_elements:
-        if elem['name'] not in doc_refs:
+        name = elem['name']
+        covered = False
+        for section in doc_sections:
+            title = section.get('title', '').lower()
+            content = section.get('content', '').lower()
+            if name.lower() in title or name.lower() in content:
+                covered = True
+                break
+        if not covered:
             findings.append({
-                'status': 'UNDOCUMENTED',
-                'element': elem['name'],
-                'file': elem['file']
+                'type': 'undocumented',
+                'element': name,
+                'path': elem.get('path', ''),
+                'message': f"'{name}' is not documented."
             })
-            
-    for ref in doc_refs:
-        if ref not in code_names:
-            if ref not in ['python', 'code', 'import', 'markdown', 'readme']:
+
+    # Check for outdated references in documentation
+    for section in doc_sections:
+        content = section.get('content', '').lower()
+        # Extract potential code references (e.g., `func_name` or `ClassName`)
+        refs = re.findall(r'`(\w+)`', content)
+        for ref in refs:
+            if ref not in code_names:
                 findings.append({
-                    'status': 'OUTDATED',
+                    'type': 'outdated_reference',
                     'element': ref,
-                    'file': 'docs'
+                    'path': section.get('path', ''),
+                    'message': f"Reference to '{ref}' not found in code structure."
                 })
-                
+
     return findings
