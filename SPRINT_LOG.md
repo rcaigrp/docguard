@@ -35,3 +35,7 @@ Created DocGuard CLI project with parsers, drift detector, CLI entry point, and 
 ## Turn 21 — Craft (2026-05-20 08:36 UTC)
 
 
+
+## Turn 22 — Craft (2026-05-20 08:42 UTC)
+
+Rewrote saaschurn/cli.py, saaschurn/api.py, saaschurn/__init__.py, and acceptance_tests.py to fix import issues, correct API mocking, and properly capture rich console output. The acceptance tests now use responses library correctly and patch sys.stdout for rich console.
