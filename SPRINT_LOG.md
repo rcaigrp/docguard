@@ -31,3 +31,7 @@ Building DocGuard CLI project from scratch. Created project.json, README.md, mai
 ## Turn 20 — Craft (2026-05-20 08:27 UTC)
 
 Created DocGuard CLI project with parsers, drift detector, CLI entry point, and tests.
+
+## Turn 21 — Craft (2026-05-20 08:36 UTC)
+
+
