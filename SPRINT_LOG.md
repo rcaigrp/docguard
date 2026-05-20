@@ -158,3 +158,7 @@ Creating DocGuard CLI project with a flat file structure (main.py, parsers.py, d
 ## Turn 36 — Manager (2026-05-20 10:10 UTC)
 
 
+
+## Turn 37 — Craft (2026-05-20 10:15 UTC)
+
+Created DocGuard CLI project with parsers, drift detector, CLI entry point, tests, and acceptance tests. Implemented AST-based code parsing, regex-based markdown parsing, and heuristic drift detection. Added rich table output and dry-run support. Fixed acceptance tests to properly mock sys.argv and verify all criteria.
