@@ -190,3 +190,7 @@ I have implemented the DocGuard CLI project. I created main.py with the CLI entr
 ## Turn 4 — Manager (2026-05-20 11:10 UTC)
 
 Rewrote main.py, parsers.py, and acceptance_tests.py to ensure all acceptance criteria are met and tests pass. Updated README.md with current status.
+
+## Turn 5 — Craft (2026-05-20 11:15 UTC)
+
+
