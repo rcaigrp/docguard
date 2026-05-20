@@ -1,70 +1,52 @@
 import argparse
-import os
 import json
+import sys
 from pathlib import Path
+
 from rich.console import Console
 from rich.table import Table
 
-from parsers import parse_code, parse_docs
-from drift_detector import find_drift
-
-console = Console()
-
-def scan_directory(directory):
-    code_files = []
-    doc_files = []
-    dir_path = Path(directory)
-    if not dir_path.is_dir():
-        raise ValueError(f"Invalid directory: {directory}")
-    for root, dirs, files in os.walk(directory):
-        for f in files:
-            full_path = os.path.join(root, f)
-            if f.endswith('.py'):
-                code_files.append(full_path)
-            elif f.endswith('.md'):
-                doc_files.append(full_path)
-    return code_files, doc_files
-
 def main():
-    parser = argparse.ArgumentParser(description="DocGuard CLI")
-    parser.add_argument('--directory', required=True, help="Directory to scan")
-    parser.add_argument('--dry-run', action='store_true', help="Run without saving output")
-    parser.add_argument('--output', type=str, help="Output file for JSON findings")
+    parser = argparse.ArgumentParser(description="DocGuard CLI - Detect documentation drift")
+    parser.add_argument("--directory", type=str, required=True, help="Directory to scan recursively")
+    parser.add_argument("--dry-run", action="store_true", help="Run in dry-run mode")
+    parser.add_argument("--output", type=str, help="Export findings to JSON file")
+    
     args = parser.parse_args()
-
-    console.print(f"[bold cyan]Scanning directory: {args.directory}[/bold cyan]")
     
-    code_files, doc_files = scan_directory(args.directory)
+    console = Console()
     
-    code_elements = []
-    for f in code_files:
-        code_elements.extend(parse_code(f))
+    if not Path(args.directory).is_dir():
+        console.print(f"[red]Error: Directory {args.directory} does not exist.[/red]")
+        sys.exit(1)
         
-    doc_sections = []
-    for f in doc_files:
-        doc_sections.extend(parse_docs(f))
-        
-    drifts = find_drift(code_elements, doc_sections)
+    from parsers import parse_code, parse_docs
+    from drift_detector import find_drift
     
-    # Build rich table
-    table = Table(show_header=True, header_style="bold cyan")
-    table.add_column("Type", style="dim")
-    table.add_column("Element", style="cyan")
-    table.add_column("Message", style="yellow")
+    code_elements = parse_code(args.directory)
+    docs = parse_docs(args.directory)
     
-    for d in drifts:
-        table.add_row(d['type'], d['element'], d['message'])
+    findings = find_drift(code_elements, docs)
+    
+    if args.dry_run:
+        console.print("[yellow]Dry-run mode enabled. No output generated.[/yellow]")
+        return
+    
+    console.print("\n[bold]DocGuard Findings:[/bold]")
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Type", style="cyan")
+    table.add_column("Element", style="green")
+    table.add_column("Issue", style="red")
+    
+    for finding in findings:
+        table.add_row(finding["type"], finding["element"], finding["issue"])
         
     console.print(table)
     
     if args.output:
-        with open(args.output, 'w') as f:
-            json.dump(drifts, f, indent=2)
+        with open(args.output, "w") as f:
+            json.dump(findings, f, indent=2)
         console.print(f"[green]Findings exported to {args.output}[/green]")
-    elif args.dry_run:
-        console.print("[yellow]Dry run mode. No output saved.[/yellow]")
-    else:
-        console.print("[yellow]No output file specified. Use --output to save findings.[/yellow]")
 
 if __name__ == "__main__":
     main()
