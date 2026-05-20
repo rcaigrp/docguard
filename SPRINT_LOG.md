@@ -11,3 +11,7 @@ Created DocGuard-CLI project from scratch with main.py, parsers.py, drift_detect
 ## Turn 15 — Manager (2026-05-20 07:58 UTC)
 
 
+
+## Turn 16 — Craft (2026-05-20 08:02 UTC)
+
+Fixed saaschurn/cli.py by completing the print_table function, adding proper argument handling, and ensuring the script runs correctly in dry-run mode. Added __main__ block for module execution. Tested via Docker command.
