@@ -1,21 +1,27 @@
-def find_drift(code_elements, docs):
+from parsers import get_code_elements, get_doc_refs
+
+def scan(directory):
+    code_elements = get_code_elements(directory)
+    doc_refs = get_doc_refs(directory)
+    
     findings = []
-    doc_headers = []
-    for doc in docs:
-        doc_headers.extend(doc.get("headers", []))
-        doc_headers.extend([ref[0] for ref in doc.get("refs", [])])
-        
+    code_names = [e['name'] for e in code_elements]
+    
     for elem in code_elements:
-        if not elem.get("doc"):
+        if elem['name'] not in doc_refs:
             findings.append({
-                "type": "UNDOCUMENTED",
-                "element": elem["name"],
-                "issue": f"Function/Class '{elem['name']}' has no docstring."
+                'status': 'UNDOCUMENTED',
+                'element': elem['name'],
+                'file': elem['file']
             })
-        elif elem["name"] not in doc_headers:
-            findings.append({
-                "type": "OUTDATED",
-                "element": elem["name"],
-                "issue": f"Documentation reference missing for '{elem['name']}'."
-            })
+            
+    for ref in doc_refs:
+        if ref not in code_names:
+            if ref not in ['python', 'code', 'import', 'markdown', 'readme']:
+                findings.append({
+                    'status': 'OUTDATED',
+                    'element': ref,
+                    'file': 'docs'
+                })
+                
     return findings

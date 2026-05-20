@@ -331,3 +331,7 @@ Rewrote parsers.py, main.py, drift_detector.py, and created acceptance_tests.py 
     "rationale": "Rewrote all files to fix truncation and ensure robustness. Tests now explicitly check all 6 criteria."
   }
 }
+
+## Turn 11 — Manager (2026-05-20 11:54 UTC)
+
+Rewrote main.py, parsers.py, drift_detector.py, and acceptance_tests.py from scratch to ensure strict compliance with acceptance criteria. Fixed syntax errors in tests, added robust mocking for rich and argparse, and implemented correct AST and regex parsing logic.
