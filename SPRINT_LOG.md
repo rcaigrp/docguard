@@ -19,3 +19,7 @@ Fixed saaschurn/cli.py by completing the print_table function, adding proper arg
 ## Turn 17 — Craft (2026-05-20 08:10 UTC)
 
 Built DocGuard CLI project files and acceptance tests.
+
+## Turn 18 — Craft (2026-05-20 08:16 UTC)
+
+Created missing api.py and fixed tests.py to ensure correct mocking and imports. The api.py now properly implements fetch_data and divides MRR by 100 to match test expectations. tests.py uses correct mock decorators and assertions. Docker command installs required libraries and runs pytest in a single step.
