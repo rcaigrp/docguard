@@ -1,40 +1,49 @@
 import argparse
+import ast
 import json
-import os
+import sys
 from pathlib import Path
-from rich.console import Console
-from rich.table import Table
-from drift_detector import scan
+import rich
+from parsers import parse_code, parse_docs
+from drift_detector import detect_drift
+
+def scan_directory(directory):
+    code = parse_code(directory)
+    docs = parse_docs(directory)
+    return code, docs
+
+def detect_drift_logic(code, docs):
+    return detect_drift(code, docs)
 
 def main():
-    parser = argparse.ArgumentParser(description='DocGuard CLI: Detect documentation drift')
-    parser.add_argument('directory', help='Directory to scan')
-    parser.add_argument('--dry-run', action='store_true', help='Run without modifying files')
-    parser.add_argument('--output', help='Export findings to JSON file')
+    parser = argparse.ArgumentParser(description='DocGuard CLI')
+    parser.add_argument('--directory', required=True, help='Directory to scan')
+    parser.add_argument('--dry-run', action='store_true', help='Dry run mode')
+    parser.add_argument('--output', default=None, help='Export findings to JSON file')
     
     args = parser.parse_args()
     
-    console = Console()
-    console.print(f"Scanning directory: {args.directory}")
+    code, docs = scan_directory(args.directory)
+    drifts = detect_drift_logic(code, docs)
     
-    findings = scan(args.directory)
+    if args.dry_run:
+        print("Dry run complete.")
+        return
     
-    table = Table(show_header=True, header_style="bold magenta")
-    table.add_column("Status", style="bold")
+    # Format output
+    table = rich.table.Table()
+    table.add_column("Type", style="bold")
     table.add_column("Element")
-    table.add_column("File")
+    table.add_column("Issue")
+    for d in drifts:
+        table.add_row(d['type'], d['element'], d['issue'])
     
-    for f in findings:
-        table.add_row(f['status'], f['element'], f['file'])
-        
+    console = rich.console.Console()
     console.print(table)
     
     if args.output:
-        with open(args.output, 'w') as out:
-            json.dump(findings, out, indent=2)
-        console.print(f"[green]Findings exported to {args.output}[/green]")
-        
-    return findings
+        with open(args.output, 'w') as f:
+            json.dump(drifts, f)
 
 if __name__ == '__main__':
     main()

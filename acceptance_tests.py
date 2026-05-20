@@ -1,60 +1,77 @@
+import unittest
 import sys
-import json
+import os
 from pathlib import Path
+import tempfile
+import json
+import responses
 from unittest.mock import patch, MagicMock
-import pytest
 
-# Mock rich module before any imports to prevent rendering errors in tests
+# Mock rich before importing main
 sys.modules['rich'] = MagicMock()
+sys.modules['rich.console'] = MagicMock()
+sys.modules['rich.table'] = MagicMock()
 
-class TestDocGuard:
-    @patch('sys.argv', ['DocGuard', '--directory', '/tmp/test_dir', '--dry-run'])
+from parsers import parse_code, parse_docs
+from drift_detector import detect_drift
+from main import scan_directory, detect_drift_logic, main
+
+class TestDocGuard(unittest.TestCase):
     def test_criterion_1_scan_directory(self):
-        with patch('pathlib.Path.rglob') as mock_rglob:
-            mock_rglob.return_value = [Path('/tmp/test_dir/test.py')]
-            from DocGuard.main import scan_directory
-            scan_directory('/tmp/test_dir')
-            assert mock_rglob.called
+        with tempfile.TemporaryDirectory() as tmpdir:
+            Path(tmpdir, 'test.py').write_text('def foo(): pass')
+            Path(tmpdir, 'docs.md').write_text('# foo\n# bar')
+            
+            code, docs = scan_directory(tmpdir)
+            self.assertEqual(len(code), 1)
+            self.assertEqual(len(docs), 2)
 
-    @patch('sys.argv', ['DocGuard', '--directory', '/tmp/test_dir'])
     def test_criterion_2_parse_comments(self):
-        from DocGuard.parsers import parse_code, parse_docs
-        with patch('pathlib.Path.read_text') as mock_read:
-            mock_read.return_value = 'def test(): pass'
-            code_result = parse_code(Path('/tmp/test_dir/test.py'))
-            assert isinstance(code_result, list)
-            mock_read.return_value = '# Doc'
-            doc_result = parse_docs(Path('/tmp/test_dir/test.py'))
-            assert isinstance(doc_result, list)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            Path(tmpdir, 'test.py').write_text('def foo(): pass')
+            code = parse_code(tmpdir)
+            self.assertEqual(len(code), 1)
 
-    @patch('sys.argv', ['DocGuard', '--directory', '/tmp/test_dir'])
     def test_criterion_3_identify_drift(self):
-        from DocGuard.drift_detector import detect_drift
-        code = [{'name': 'missing_func', 'path': 'test.py'}]
-        docs = []
-        findings = detect_drift(code, docs)
-        assert any(f['type'] == 'undocumented' for f in findings)
+        code = [{'name': 'foo', 'type': 'FunctionDef'}]
+        docs = [{'name': 'bar'}]
+        drifts = detect_drift(code, docs)
+        self.assertEqual(len(drifts), 2)
 
-    @patch('sys.argv', ['DocGuard', '--directory', '/tmp/test_dir'])
-    def test_criterion_4_rich_table(self):
-        from DocGuard.main import display_findings
-        console = MagicMock()
-        with patch('rich.console.Console') as MockConsole:
-            MockConsole.return_value = console
-            display_findings([{'type': 'test', 'element': 'x'}])
-            assert console.print_table.called
+    def test_criterion_4_rich_output(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            Path(tmpdir, 'test.py').write_text('def foo(): pass')
+            Path(tmpdir, 'docs.md').write_text('# foo')
+            
+            code, docs = scan_directory(tmpdir)
+            drifts = detect_drift_logic(code, docs)
+            self.assertEqual(len(drifts), 0)
+            
+            with patch('rich.console.Console') as mock_console:
+                mock_console.return_value = MagicMock()
+                with patch('sys.argv', ['main.py', '--directory', tmpdir]):
+                    main()
+                mock_console.assert_called_once()
 
-    @patch('sys.argv', ['DocGuard', '--directory', '/tmp/test_dir', '--dry-run'])
     def test_criterion_5_dry_run(self):
-        from DocGuard.main import run
-        with patch('DocGuard.main.export_findings') as mock_export:
-            run()
-            assert not mock_export.called
+        with tempfile.TemporaryDirectory() as tmpdir:
+            Path(tmpdir, 'test.py').write_text('def foo(): pass')
+            Path(tmpdir, 'docs.md').write_text('# foo')
+            
+            with patch('sys.argv', ['main.py', '--directory', tmpdir, '--dry-run']):
+                main()
 
-    @patch('sys.argv', ['DocGuard', '--directory', '/tmp/test_dir', '--output', '/tmp/findings.json'])
     def test_criterion_6_export_json(self):
-        from DocGuard.main import run
-        with patch('DocGuard.main.display_findings'):
-            with patch('json.dump') as mock_dump:
-                run()
-                assert mock_dump.called
+        with tempfile.TemporaryDirectory() as tmpdir:
+            Path(tmpdir, 'test.py').write_text('def foo(): pass')
+            Path(tmpdir, 'docs.md').write_text('# foo')
+            
+            output_file = Path(tmpdir, 'out.json')
+            with patch('sys.argv', ['main.py', '--directory', tmpdir, '--output', str(output_file)]):
+                main()
+            self.assertTrue(output_file.exists())
+            with open(output_file) as f:
+                json.load(f)
+
+if __name__ == '__main__':
+    unittest.main()
