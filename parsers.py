@@ -1,34 +1,38 @@
 import ast
-from pathlib import Path
+import os
 import re
 
-def parse_code(directory):
-    code_elements = []
-    for path in Path(directory).rglob("*.py"):
-        try:
-            with open(path, "r") as f:
-                tree = ast.parse(f.read())
-            for node in ast.walk(tree):
-                if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
-                    doc = ast.get_docstring(node) or ""
-                    code_elements.append({
-                        "name": node.name,
-                        "file": str(path),
-                        "doc": doc[:50] + "..." if len(doc) > 50 else doc
-                    })
-        except Exception as e:
-            pass
-    return code_elements
-
-def parse_docs(directory):
-    doc_sections = {}
-    for path in Path(directory).rglob("*.md"):
-        with open(path, "r") as f:
-            content = f.read()
-        for match in re.finditer(r"^(#+)\s+(.*)", content, re.M):
-            level, title = match.groups()
-            doc_sections.setdefault(str(path), []).append({
-                "level": level,
-                "title": title
+def parse_python_code(file_path):
+    """Parse Python file and extract function/class definitions."""
+    with open(file_path, 'r') as f:
+        source = f.read()
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return []
+    
+    elements = []
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+            docstring = ast.get_docstring(node)
+            elements.append({
+                'name': node.name,
+                'docstring': docstring,
+                'type': 'function' if isinstance(node, ast.FunctionDef) else 'class'
             })
-    return doc_sections
+    return elements
+
+def parse_markdown_docs(directory):
+    """Parse Markdown files in directory and extract documentation sections."""
+    docs = {}
+    for root, dirs, files in os.walk(directory):
+        for f in files:
+            if f.endswith('.md'):
+                file_path = os.path.join(root, f)
+                with open(file_path, 'r') as fp:
+                    content = fp.read()
+                # Simple heuristic: extract headings as keys
+                for match in re.finditer(r'^# (.*?)$', content, re.MULTILINE):
+                    heading = match.group(1)
+                    docs[heading] = True
+    return docs

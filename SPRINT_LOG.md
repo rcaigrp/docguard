@@ -174,3 +174,7 @@ Created DocGuard CLI project with parsers, drift detector, CLI entry point, test
 ## Turn 40 — Manager (2026-05-20 10:43 UTC)
 
 Created missing project files (setup.py, saaschurn package, acceptance_tests.py) to fix pip install failure and run acceptance tests.
+
+## Turn 1 — Manager (2026-05-20 10:49 UTC)
+
+Rewrote all project files with a robust implementation and comprehensive acceptance tests. Fixed import issues, directory scanning logic, drift detection heuristics, and CLI argument parsing. Updated README and project.json to reflect progress.

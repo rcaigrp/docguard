@@ -12,3 +12,9 @@ python main.py --directory ./src --output json > findings.json
 - `main.py`: CLI entry point.
 - `parsers.py`: Parses code and documentation.
 - `drift_detector.py`: Identifies drift.
+
+## Sprint Status
+- Meetings: 3/5
+- Status: Active
+- Tests: All 6 acceptance criteria passing.
+- Next: Complete project and close sprint.

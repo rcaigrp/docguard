@@ -1,21 +1,16 @@
-def detect_drift(code_elements, doc_sections):
+def detect_drift(code_elements, docs, dry_run=False):
+    """Identify potential drift between code and documentation."""
     findings = []
-    doc_titles = []
-    for sections in doc_sections.values():
-        for s in sections:
-            doc_titles.append(s["title"])
-            
+    
+    # Check for undocumented functions/classes
     for elem in code_elements:
-        if elem["name"] not in doc_titles:
-            findings.append({
-                "element": elem["name"],
-                "status": "UNDOC",
-                "file": elem["file"]
-            })
-        else:
-            findings.append({
-                "element": elem["name"],
-                "status": "OK",
-                "file": elem["file"]
-            })
+        if not elem.get('docstring'):
+            findings.append({'type': 'undocumented', 'name': elem['name']})
+            
+    # Check for outdated references (docs exist but code doesn't)
+    code_names = {elem['name'] for elem in code_elements}
+    for doc_name in docs:
+        if doc_name not in code_names:
+            findings.append({'type': 'outdated_reference', 'name': doc_name})
+            
     return findings
