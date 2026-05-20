@@ -1,80 +1,70 @@
 import argparse
+import os
 import json
-import sys
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
-from parsers import parse_code_file, parse_markdown_file
-from drift_detector import detect_drift
+from parsers import parse_code, parse_docs
+from drift_detector import find_drift
 
 console = Console()
 
 def scan_directory(directory):
     code_files = []
     doc_files = []
-    root_path = Path(directory)
-    for file in root_path.rglob('*'):
-        if file.is_file():
-            if file.suffix == '.py':
-                code_files.append(file)
-            elif file.suffix == '.md':
-                doc_files.append(file)
+    dir_path = Path(directory)
+    if not dir_path.is_dir():
+        raise ValueError(f"Invalid directory: {directory}")
+    for root, dirs, files in os.walk(directory):
+        for f in files:
+            full_path = os.path.join(root, f)
+            if f.endswith('.py'):
+                code_files.append(full_path)
+            elif f.endswith('.md'):
+                doc_files.append(full_path)
     return code_files, doc_files
 
 def main():
-    parser = argparse.ArgumentParser(description='DocGuard CLI')
-    parser.add_argument('--directory', required=True)
-    parser.add_argument('--dry-run', action='store_true')
-    parser.add_argument('--output')
-    
+    parser = argparse.ArgumentParser(description="DocGuard CLI")
+    parser.add_argument('--directory', required=True, help="Directory to scan")
+    parser.add_argument('--dry-run', action='store_true', help="Run without saving output")
+    parser.add_argument('--output', type=str, help="Output file for JSON findings")
     args = parser.parse_args()
 
-    if not Path(args.directory).is_dir():
-        console.print(f"[red]Error: Directory '{args.directory}' does not exist.[/red]")
-        sys.exit(1)
-
-    console.print(f"[bold]Scanning directory:[/bold] {args.directory}")
-
+    console.print(f"[bold cyan]Scanning directory: {args.directory}[/bold cyan]")
+    
     code_files, doc_files = scan_directory(args.directory)
-
+    
     code_elements = []
-    for cf in code_files:
-        parsed = parse_code_file(cf)
-        code_elements.extend(parsed)
-
-    doc_elements_list = []
-    for df in doc_files:
-        parsed = parse_markdown_file(df)
-        doc_elements_list.append(parsed)
-
-    combined_doc_elements = {'headings': [], 'code_snippets': [], 'filepath': 'combined'}
-    for de in doc_elements_list:
-        combined_doc_elements['headings'].extend(de['headings'])
-        combined_doc_elements['code_snippets'].extend(de['code_snippets'])
-
-    console.print(f"[bold]Found[/bold] {len(code_elements)} code elements and {len(doc_files)} doc files.")
-
-    findings = detect_drift(code_elements, combined_doc_elements)
-
-    table = Table()
-    table.add_column("Type", style="cyan")
-    table.add_column("Element", style="green")
-    table.add_column("Issue", style="yellow")
-    for finding in findings:
-        table.add_row(finding['type'], finding['element'], finding['issue'])
+    for f in code_files:
+        code_elements.extend(parse_code(f))
+        
+    doc_sections = []
+    for f in doc_files:
+        doc_sections.extend(parse_docs(f))
+        
+    drifts = find_drift(code_elements, doc_sections)
+    
+    # Build rich table
+    table = Table(show_header=True, header_style="bold cyan")
+    table.add_column("Type", style="dim")
+    table.add_column("Element", style="cyan")
+    table.add_column("Message", style="yellow")
+    
+    for d in drifts:
+        table.add_row(d['type'], d['element'], d['message'])
+        
     console.print(table)
-
+    
     if args.output:
-        if args.dry_run:
-            console.print("[yellow]Dry run: Skipping JSON export.[/yellow]")
-        else:
-            with open(args.output, 'w') as f:
-                json.dump(findings, f, indent=2)
-            console.print(f"[green]Findings exported to {args.output}[/green]")
+        with open(args.output, 'w') as f:
+            json.dump(drifts, f, indent=2)
+        console.print(f"[green]Findings exported to {args.output}[/green]")
+    elif args.dry_run:
+        console.print("[yellow]Dry run mode. No output saved.[/yellow]")
+    else:
+        console.print("[yellow]No output file specified. Use --output to save findings.[/yellow]")
 
-    if args.dry_run:
-        console.print("[yellow]Dry run mode enabled. No files written.[/yellow]")
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

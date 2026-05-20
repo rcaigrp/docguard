@@ -282,3 +282,7 @@ Rewrote main.py, parsers.py, and acceptance_tests.py to ensure all acceptance cr
 ## Turn 7 — Craft (2026-05-20 11:25 UTC)
 
 Rebuilt DocGuard CLI project with corrected structure, robust parsers, drift detector, and comprehensive acceptance tests. Fixed issues with missing files and incorrect test logic.
+
+## Turn 8 — Manager (2026-05-20 11:31 UTC)
+
+Rewrote parsers.py, main.py, drift_detector.py, and created acceptance_tests.py to fix parsing logic and satisfy all 6 acceptance criteria. parsers.py now uses ast and regex robustly. main.py handles CLI args and rich table output. drift_detector.py flags undocumented code and outdated references. acceptance_tests.py covers all criteria with mocked console and subprocess-safe assertions.

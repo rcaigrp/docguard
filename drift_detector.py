@@ -1,23 +1,23 @@
-import re
-
-def detect_drift(code_elements, doc_elements):
-    findings = []
-    for element in code_elements:
-        if not element.get('docstring'):
-            findings.append({
-                'type': 'warning',
-                'element': f"{element['type']} {element['name']}",
-                'issue': 'No documentation string found.'
+def find_drift(code_elements, doc_sections):
+    drifts = []
+    # 1. Check for undocumented code elements
+    for elem in code_elements:
+        if not elem.get('docstring'):
+            drifts.append({
+                'type': 'UNDOCUMENTED',
+                'element': elem['name'],
+                'message': f"No docstring for {elem['name']} in {elem.get('file', 'unknown')}"
             })
-    
-    doc_text = ' '.join(doc_elements.get('headings', [])) + ' ' + ' '.join(doc_elements.get('code_snippets', []))
-    
-    for element in code_elements:
-        pattern = re.compile(r'\b' + re.escape(element['name']) + r'\b', re.IGNORECASE)
-        if not pattern.search(doc_text):
-            findings.append({
-                'type': 'info',
-                'element': f"{element['type']} {element['name']}",
-                'issue': 'Not mentioned in documentation.'
-            })
-    return findings
+            
+    # 2. Check for outdated documentation references
+    code_names = {e['name'].lower() for e in code_elements}
+    for sec in doc_sections:
+        # If it's a reference, check if it exists in code
+        if sec.get('type') == 'REFERENCE':
+            if sec['name'].lower() not in code_names:
+                drifts.append({
+                    'type': 'OUTDATED',
+                    'element': sec['name'],
+                    'message': f"Docs reference '{sec['name']}' not found in code"
+                })
+    return drifts
