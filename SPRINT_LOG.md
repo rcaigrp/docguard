@@ -1,0 +1,5 @@
+# Sprint Log — DocGuard
+
+## Turn 13 — Craft (2026-05-20 07:37 UTC)
+
+Created DocGuard-CLI project from scratch with main.py, parsers.py, drift_detector.py, tests.py, and acceptance_tests.py. Implements AST-based code parsing, regex-based doc parsing, drift detection heuristics, and rich CLI output. All files are self-contained and tested.
