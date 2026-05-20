@@ -27,3 +27,7 @@ Created missing api.py and fixed tests.py to ensure correct mocking and imports.
 ## Turn 19 — Craft (2026-05-20 08:21 UTC)
 
 Building DocGuard CLI project from scratch. Created project.json, README.md, main.py, parsers.py, drift_detector.py, and acceptance_tests.py to meet all acceptance criteria. Implemented CLI with argparse, AST-based code parsing, regex-based doc parsing, and drift detection logic. Added comprehensive tests mocking rich console and file systems.
+
+## Turn 20 — Craft (2026-05-20 08:27 UTC)
+
+Created DocGuard CLI project with parsers, drift detector, CLI entry point, and tests.
