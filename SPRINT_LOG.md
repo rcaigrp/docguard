@@ -154,3 +154,7 @@ Creating DocGuard CLI project with a flat file structure (main.py, parsers.py, d
 ## Turn 35 — Craft (2026-05-20 10:00 UTC)
 
 
+
+## Turn 36 — Manager (2026-05-20 10:10 UTC)
+
+
