@@ -146,3 +146,7 @@ Rewriting the CLI and tests to be simple and robust. Creating the saaschurn pack
 ## Turn 33 — Craft (2026-05-20 09:51 UTC)
 
 
+
+## Turn 34 — Craft (2026-05-20 09:56 UTC)
+
+Creating DocGuard CLI project with a flat file structure (main.py, parsers.py, drift_detector.py, tests.py) to avoid the pyproject.toml editable install error from the previous attempt. This approach allows running tests directly without package installation.
