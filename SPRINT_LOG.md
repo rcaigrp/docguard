@@ -278,3 +278,7 @@ Rewrote main.py, parsers.py, and acceptance_tests.py to ensure all acceptance cr
   }
 }
 ```<|mask_end|>
+
+## Turn 7 — Craft (2026-05-20 11:25 UTC)
+
+Rebuilt DocGuard CLI project with corrected structure, robust parsers, drift detector, and comprehensive acceptance tests. Fixed issues with missing files and incorrect test logic.

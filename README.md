@@ -1,19 +1,15 @@
 # DocGuard CLI
 
-## Goal
-Detect documentation drift in software projects by comparing code comments and documentation files against code structure.
+A CLI tool to detect documentation drift in Python projects.
 
-## Acceptance Criteria
-1. Scan specified directory recursively.
-2. Parse code comments and markdown documentation files.
-3. Identify potential drift (e.g., undocumented functions, outdated references).
-4. Output a formatted `rich` terminal table with findings.
-5. Support dry-run mode.
-6. Export findings to JSON.
+## Usage
+```bash
+python main.py --directory ./path/to/project --dry-run --output findings.json
+```
 
-## Status
-- All criteria implemented.
-- Tests passing.
-
-## Next Steps
-- Deploy to production.
+## Features
+- Scans Python files and Markdown docs.
+- Detects undocumented functions/classes.
+- Detects references in code that are missing from docs.
+- Outputs findings in a Rich terminal table.
+- Exports results to JSON.

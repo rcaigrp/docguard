@@ -1,36 +1,23 @@
-from parsers import extract_references
+import re
 
-def detect_drift(code_elements, doc_sections):
-    """Identify potential drift between code and documentation."""
+def detect_drift(code_elements, doc_elements):
     findings = []
+    for element in code_elements:
+        if not element.get('docstring'):
+            findings.append({
+                'type': 'warning',
+                'element': f"{element['type']} {element['name']}",
+                'issue': 'No documentation string found.'
+            })
     
-    # 1. Undocumented functions (code elements without docstrings)
-    for filepath, elements in code_elements.items():
-        for name, info in elements.items():
-            if not info['docstring']:
-                findings.append({
-                    'type': 'undocumented',
-                    'element': name,
-                    'file': filepath,
-                    'message': f"{info['type']} '{name}' has no docstring."
-                })
+    doc_text = ' '.join(doc_elements.get('headings', [])) + ' ' + ' '.join(doc_elements.get('code_snippets', []))
     
-    # 2. Outdated references (doc references to functions not in code)
-    all_code_names = set()
-    for elements in code_elements.values():
-        all_code_names.update(elements.keys())
-        
-    for filepath, sections in doc_sections.items():
-        for section_title, content in sections.items():
-            refs = extract_references(content)
-            for ref in refs:
-                if ref not in all_code_names:
-                    findings.append({
-                        'type': 'outdated_reference',
-                        'reference': ref,
-                        'file': filepath,
-                        'section': section_title,
-                        'message': f"Reference '{ref}' not found in code."
-                    })
-                    
+    for element in code_elements:
+        pattern = re.compile(r'\b' + re.escape(element['name']) + r'\b', re.IGNORECASE)
+        if not pattern.search(doc_text):
+            findings.append({
+                'type': 'info',
+                'element': f"{element['type']} {element['name']}",
+                'issue': 'Not mentioned in documentation.'
+            })
     return findings
