@@ -1,19 +1,27 @@
 import ast
-import re
 
-def parse_code(path):
+def parse_code_file(filepath):
     try:
-        with open(path) as f: tree = ast.parse(f.read())
-        res = []
-        for n in ast.walk(tree):
-            if isinstance(n, (ast.FunctionDef, ast.ClassDef)):
-                res.append({"name": n.name, "type": type(n).__name__, "file": path})
-        return res
-    except: return []
+        with open(filepath, 'r') as f:
+            source = f.read()
+        tree = ast.parse(source)
+        functions = []
+        classes = []
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                functions.append({'name': node.name, 'docstring': ast.get_docstring(node)})
+            elif isinstance(node, ast.ClassDef):
+                classes.append({'name': node.name, 'docstring': ast.get_docstring(node)})
+        return functions, classes
+    except Exception:
+        return [], []
 
-def parse_docs(path):
-    try:
-        with open(path) as f: content = f.read()
-        headings = re.findall(r'^# (.+)', content, re.MULTILINE)
-        return [{"name": h, "type": "Doc", "file": path} for h in headings]
-    except: return []
+def parse_markdown_file(filepath):
+    with open(filepath, 'r') as f:
+        content = f.read()
+    sections = {}
+    for line in content.split('\n'):
+        if line.startswith('## '):
+            name = line[3:].strip()
+            sections[name] = ""
+    return sections
