@@ -1,49 +1,44 @@
 import argparse
-import ast
-import json
 import sys
-from pathlib import Path
-import rich
-from parsers import parse_code, parse_docs
-from drift_detector import detect_drift
+import json
+import pathlib
 
-def scan_directory(directory):
-    code = parse_code(directory)
-    docs = parse_docs(directory)
-    return code, docs
-
-def detect_drift_logic(code, docs):
-    return detect_drift(code, docs)
+from rich.console import Console
+from rich.table import Table
 
 def main():
     parser = argparse.ArgumentParser(description='DocGuard CLI')
     parser.add_argument('--directory', required=True, help='Directory to scan')
     parser.add_argument('--dry-run', action='store_true', help='Dry run mode')
-    parser.add_argument('--output', default=None, help='Export findings to JSON file')
+    parser.add_argument('--output', type=str, help='Export findings to file (e.g., json)')
     
     args = parser.parse_args()
     
-    code, docs = scan_directory(args.directory)
-    drifts = detect_drift_logic(code, docs)
-    
     if args.dry_run:
-        print("Dry run complete.")
+        print("Dry run mode enabled.")
         return
     
-    # Format output
-    table = rich.table.Table()
-    table.add_column("Type", style="bold")
-    table.add_column("Element")
-    table.add_column("Issue")
-    for d in drifts:
-        table.add_row(d['type'], d['element'], d['issue'])
+    from parsers import parse_code, parse_docs
+    from drift_detector import detect_drift
     
-    console = rich.console.Console()
+    code = parse_code(args.directory)
+    docs = parse_docs(args.directory)
+    findings = detect_drift(code, docs)
+    
+    console = Console(force_terminal=False)
+    table = Table(show_header=True, header_style="bold cyan")
+    table.add_column("Type", style="dim")
+    table.add_column("Element", style="cyan")
+    table.add_column("Issue", style="red")
+    
+    for f in findings:
+        table.add_row(f['type'], f['element'], f['issue'])
+    
     console.print(table)
     
     if args.output:
-        with open(args.output, 'w') as f:
-            json.dump(drifts, f)
+        output_path = pathlib.Path(args.output)
+        output_path.write_text(json.dumps(findings))
 
 if __name__ == '__main__':
     main()

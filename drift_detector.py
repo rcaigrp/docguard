@@ -1,22 +1,22 @@
 def detect_drift(code_elements, doc_sections):
-    drifts = []
-    code_names = {c['name'].lower(): c for c in code_elements}
-    doc_names = {d['name'].lower(): d for d in doc_sections}
+    findings = []
+    doc_names = [d['name'] for d in doc_sections]
+    code_names = [c['name'] for c in code_elements]
     
-    for name, element in code_names.items():
-        if name not in doc_names:
-            drifts.append({
-                'type': 'UNDOC',
-                'element': element['name'],
-                'issue': f'No documentation found for {element["type"]} {element["name"]}'
+    for c in code_elements:
+        if c['name'] not in doc_names:
+            findings.append({
+                'type': 'undocumented',
+                'element': c['name'],
+                'issue': f"Function {c['name']} is not documented."
             })
             
-    for name, doc in doc_names.items():
-        if name not in code_names:
-            drifts.append({
-                'type': 'OUTDATED',
-                'element': doc['name'],
-                'issue': f'Documentation for {doc["name"]} has no corresponding code'
+    for d in doc_sections:
+        if d['name'] not in code_names:
+            findings.append({
+                'type': 'outdated',
+                'element': d['name'],
+                'issue': f"Documentation {d['name']} has no matching code."
             })
             
-    return drifts
+    return findings
